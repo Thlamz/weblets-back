@@ -19,6 +19,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
     }
 }
 );
+
 sequelize
     .authenticate()
     .then(() => {
@@ -28,7 +29,11 @@ sequelize
         console.error('Unable to connect to the database:', err);
     });
 
-const io = new Server(server)
+const io = new Server(server, {
+    cors: {
+        origin: '*'
+    }
+})
 
 const Entry = sequelize.define('User', {
     host: {
