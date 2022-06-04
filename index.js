@@ -11,7 +11,8 @@ const server = express()
   .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: "postgres"
+    dialect: "postgres",
+    ssl: true
 })
 const io = new Server(server)
 
