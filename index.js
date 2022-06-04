@@ -76,6 +76,7 @@ async function set_host_latency(host, latency) {
             host: host,
             latency: latency
         })
+        io.local.emit('leaderboard', await get_leaderboard())
     } else {
         if (latency > entry.latency) {
             entry.latency = latency
