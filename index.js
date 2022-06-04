@@ -1,15 +1,19 @@
-const http = require('http')
-const server = http.createServer()
-const { Server } = require("socket.io")
+const { socketIO } = require("socket.io")
 const { hrtime } =  require("process")
 const { Sequelize, DataTypes } = require("sequelize")
+const express = require("express")
 
-const sequelize = new Sequelize(process.env.DATABASE_URL)
-const io = new Server(server, {
-    cors: {
-        origin: "*",
-    },
-});
+const PORT = process.env.PORT || 3000;
+const INDEX = '/index.html';
+
+const server = express()
+  .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
+  .listen(PORT, () => console.log(`Listening on ${PORT}`));
+
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+    dialect: "postgres"
+})
+const io = socketIO(server)
 
 const Entry = sequelize.define('User', {
     host: {
@@ -33,7 +37,7 @@ async function get_host_latency(host) {
     return entry === null ? 0 : entry.latency
 }
 
-function set_host_latency(host, latency) {
+async function set_host_latency(host, latency) {
     let entry = await Entry.findOne({
         where: {
             "host": host
@@ -59,7 +63,7 @@ function set_host_latency(host, latency) {
     return entry
 }
 
-function register_measure(socket) {
+async function register_measure(socket) {
     let lastMeasure;
     let lastPing;
     socket.conn.on("packet", ({data}) => {
