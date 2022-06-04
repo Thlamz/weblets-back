@@ -115,7 +115,11 @@ async function set_host_latency(host, latency) {
     }
 }
 async function get_leaderboard() {
-    let entries = await Entry.findAll()
+    let entries = await Entry.findAll({
+        order: [
+            ['latency', 'DESC']
+        ]
+    })
     return entries.map(e => ({
         nickname: e.nickname,
         latency: e.latency
