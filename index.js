@@ -134,7 +134,7 @@ async function register_measure(socket) {
             let entry = set_host_latency(socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress, lastMeasure)
             socket.emit("status", {
                 nickname: entry.nickname,
-                latency
+                latency: lastMeasure
             })
 
         }
