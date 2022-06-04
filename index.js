@@ -1,6 +1,7 @@
 const { Server } = require("socket.io")
 const { hrtime } = require("process")
 const { Sequelize, DataTypes } = require("sequelize")
+const fs = require("fs")
 const express = require("express")
 
 const PORT = process.env.PORT || 3000;
@@ -40,6 +41,10 @@ const Entry = sequelize.define('Entry', {
         type: DataTypes.STRING,
         allowNull: false
     },
+    nickname: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     latency: {
         type: DataTypes.DOUBLE,
         allowNull: false
@@ -70,12 +75,24 @@ async function get_entry_latency(host) {
 
     return entry.latency
 }
+
+
+names = fs.readFileSync("./identifiers/names/names.txt").split(/\r?\n/)
+fruits = fs.readFileSync("./identifiers/surnames/fruit_names.txt").split(/\r?\n/)
+function get_nickname() {
+    let nameIndex = Math.floor(Math.random() * names.length)
+    let fruitIndex = Math.floor(Math.random() * names.length)
+
+    return names[nameIndex] + " " + fruits[fruitIndex]
+}
+
 async function set_host_latency(host, latency) {
     let currentLatency = await get_entry_latency(host)
     if (currentLatency === null) {
         entry = await Entry.create({
             host: host,
-            latency: latency
+            latency: latency,
+            nickname: get_nickname()
         })
         io.local.emit('leaderboard', await get_leaderboard())
     } else {
@@ -96,7 +113,7 @@ async function set_host_latency(host, latency) {
 async function get_leaderboard() {
     let entries = await Entry.findAll()
     return entries.map(e => ({
-        host: e.host,
+        nickname: e.nickname,
         latency: e.latency
     }))
 }
@@ -110,7 +127,7 @@ async function register_measure(socket) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
             console.log(socket.handshake)
-            set_host_latency(socket.handshake.address, lastMeasure)
+            set_host_latency(socket.conn.remoteAddress, lastMeasure)
         }
     })
 
@@ -127,7 +144,6 @@ async function register_measure(socket) {
 }
 
 io.on('connection', (socket) => {
-    console.log('a user connected');
     register_measure(socket)
     get_leaderboard().then((leaderboard) => {
         socket.emit('leaderboard', leaderboard)
