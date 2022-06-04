@@ -47,30 +47,30 @@ const Entry = sequelize.define('Entry', {
 }, {});
 Entry.sync()
 
+max_cached_entries = 1000
+let cached_entries = {
 
-async function get_host_latency(host) {
+}
+async function get_entry(host) {
+    if(host in cached_entries) {
+        return cached_entries[host]
+    }
+    
     let entry = await Entry.findOne({
         where: {
             "host": host
         }
     })
-    return entry === null ? 0 : entry.latency
-}
 
-async function get_leaderboard() {
-    let entries = await Entry.findAll()
-    return entries.map(e => ({
-        host: e.host,
-        latency: e.latency
-    }))
-}
+    if (Object.keys(cached_entries).length > 1000) {
+        delete cached_entries[Object.keys(cached_entries)[0]]
+    }
+    cached_entries[host] = entry
 
+    return entry
+}
 async function set_host_latency(host, latency) {
-    let entry = await Entry.findOne({
-        where: {
-            "host": host
-        }
-    })
+    let entry = await get_entry(host)
     if (entry === null) {
         entry = await Entry.create({
             host: host,
@@ -86,6 +86,14 @@ async function set_host_latency(host, latency) {
     }
     return entry
 }
+async function get_leaderboard() {
+    let entries = await Entry.findAll()
+    return entries.map(e => ({
+        host: e.host,
+        latency: e.latency
+    }))
+}
+
 
 async function register_measure(socket) {
     let lastMeasure;
@@ -94,16 +102,8 @@ async function register_measure(socket) {
         if (typeof packet.data === 'string' && packet.data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
-            
+            set_host_latency(socket.handshake.address.address, lastMeasure)
         }
-    })
-
-    socket.on("send", (host) => {
-        if(!host) {
-            return;
-        }
-        console.log("Saved host: ", host)
-        set_host_latency(host, lastMeasure)
     })
 
     let interval = setInterval(
