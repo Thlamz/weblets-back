@@ -47,39 +47,46 @@ const Entry = sequelize.define('Entry', {
 }, {});
 Entry.sync()
 
-max_cached_entries = 1000
-let cached_entries = {
-
-}
-async function get_entry(host) {
-    // if(host in cached_entries) {
-    //     return cached_entries[host]
-    // }
+max_cached_entries = 10000
+let cached_entries = {}
+async function get_entry_latency(host) {
+    if(host in cached_entries) {
+         return cached_entries[host]
+    }
     
     let entry = await Entry.findOne({
         where: {
             "host": host
         }
     })
+    if(!entry) {
+        return null
+    }
 
-    // if (Object.keys(cached_entries).length > 1000) {
-    //     delete cached_entries[Object.keys(cached_entries)[0]]
-    // }
-    // cached_entries[host] = entry
+    if (Object.keys(cached_entries).length > 10000) {
+        delete cached_entries[Object.keys(cached_entries)[0]]
+    }
+    cached_entries[host] = entry.latency
 
-    return entry
+    return entry.latency
 }
 async function set_host_latency(host, latency) {
-    let entry = await get_entry(host)
-    if (entry === null) {
+    let currentLatency = await get_entry_latency(host)
+    if (currentLatency === null) {
         entry = await Entry.create({
             host: host,
             latency: latency
         })
         io.local.emit('leaderboard', await get_leaderboard())
     } else {
-        if (latency > entry.latency) {
+        if (latency > currentLatency) {
+            let entry = await Entry.findOne({
+                where: {
+                    "host": host
+                }
+            })
             entry.latency = latency
+            cached_entries[host] = latency
             await entry.save()
             io.local.emit('leaderboard', await get_leaderboard())
         }
