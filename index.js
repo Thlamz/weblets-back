@@ -155,15 +155,18 @@ async function register_measure(socket) {
         }
     })
 
-    let interval = setInterval(
-        () => {
-            socket.send("pingMeasure")
-            lastPing = hrtime.bigint()
-        }, 500
-    )
+    let interval
+    let pingFunction = () => {
+        socket.send("pingMeasure")
+        lastPing = hrtime.bigint()
+        interval = setTimeout(pingFunction, 500)
+    }
+    interval = setTimeout(pingFunction, 500)
 
     socket.on("disconnect", () => {
-        clearInterval(interval)
+        if(interval) {
+            clearInterval(interval)
+        }
     })
 }
 
