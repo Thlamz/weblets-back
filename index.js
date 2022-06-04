@@ -48,6 +48,12 @@ function set_host_latency(host, latency) {
         if(latency > entry.latency) {
             entry.latency = latency
             await entry.save()
+
+            let entries = await Entry.findAll()
+            io.local.emit('leaderboard', entries.map(e => ({
+                host: e.host,
+                latency: e.latency
+            })))
         }
     }
     return entry
