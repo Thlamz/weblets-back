@@ -133,7 +133,9 @@ async function register_measure(socket) {
     let host = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress
 
     let entry = await Entry.findOne({
-        host
+        where: {
+            "host": host
+        }
     })
     if(!entry) {
         entry = await Entry.create({
