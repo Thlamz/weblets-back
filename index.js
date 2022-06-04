@@ -4,7 +4,7 @@ const { Server } = require("socket.io")
 const { hrtime } =  require("process")
 const { Sequelize, DataTypes } = require("sequelize")
 
-const sequelize = new Sequelize(process.env.PSQL_URL)
+const sequelize = new Sequelize(process.env.DATABASE_URL)
 const io = new Server(server, {
     cors: {
         origin: "*",
