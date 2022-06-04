@@ -35,7 +35,7 @@ const io = new Server(server, {
     }
 })
 
-const Entry = sequelize.define('User', {
+const Entry = sequelize.define('Entry', {
     host: {
         type: DataTypes.STRING,
         allowNull: false
@@ -98,6 +98,7 @@ async function register_measure(socket) {
     })
 
     socket.conn.on("send", (host) => {
+        console.log("Saved host: ", host)
         set_host_latency(host, lastMeasure)
     })
 
