@@ -146,26 +146,25 @@ async function register_measure(socket) {
     }
     socket.emit("nickname", entry.nickname)
 
-    socket.conn.on("packet", (packet) => {
-        if (typeof packet.data === 'string' && packet.data.includes("pongMeasure")) {
-            lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
-            socket.emit("latency", lastMeasure)
-            console.log(socket.handshake)
-            set_host_latency(host, lastMeasure)
-        }
-    })
-
     let interval
     let pingFunction = () => {
         socket.send("pingMeasure")
         lastPing = hrtime.bigint()
-        interval = setTimeout(pingFunction, 500)
     }
     interval = setTimeout(pingFunction, 500)
 
     socket.on("disconnect", () => {
         if(interval) {
-            clearInterval(interval)
+            clearTimeout(interval)
+        }
+    })
+
+    socket.conn.on("packet", (packet) => {
+        if (typeof packet.data === 'string' && packet.data.includes("pongMeasure")) {
+            lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
+            socket.emit("latency", lastMeasure)
+            interval = setTimeout(pingFunction, 500)
+            set_host_latency(host, lastMeasure)
         }
     })
 }
