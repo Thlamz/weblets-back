@@ -99,6 +99,9 @@ async function register_measure(socket) {
     })
 
     socket.on("send", (host) => {
+        if(!host) {
+            return;
+        }
         console.log("Saved host: ", host)
         set_host_latency(host, lastMeasure)
     })
