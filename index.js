@@ -132,7 +132,7 @@ async function register_measure(socket) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
             console.log(socket.handshake)
-            set_host_latency(socket.conn.remoteAddress, lastMeasure)
+            set_host_latency(socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress, lastMeasure)
         }
     })
 
