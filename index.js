@@ -57,6 +57,14 @@ async function get_host_latency(host) {
     return entry === null ? 0 : entry.latency
 }
 
+async function get_leaderboard() {
+    let entries = await Entry.findAll()
+    return entries.map(e => ({
+        host: e.host,
+        latency: e.latency
+    }))
+}
+
 async function set_host_latency(host, latency) {
     let entry = await Entry.findOne({
         where: {
@@ -72,12 +80,7 @@ async function set_host_latency(host, latency) {
         if (latency > entry.latency) {
             entry.latency = latency
             await entry.save()
-
-            let entries = await Entry.findAll()
-            io.local.emit('leaderboard', entries.map(e => ({
-                host: e.host,
-                latency: e.latency
-            })))
+            io.local.emit('leaderboard', await get_leaderboard())
         }
     }
     return entry
@@ -90,8 +93,12 @@ async function register_measure(socket) {
         if (typeof data === 'string' && data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
-            set_host_latency(socket.id, lastMeasure)
+            
         }
+    })
+
+    socket.conn.on("send", (host) => {
+        set_host_latency(host, lastMeasure)
     })
 
     let interval = setInterval(
@@ -109,4 +116,7 @@ async function register_measure(socket) {
 io.on('connection', (socket) => {
     console.log('a user connected');
     register_measure(socket)
+    get_leaderboard().then((leaderboard) => {
+        socket.emit('leaderboard', leaderboard)
+    })
 });
