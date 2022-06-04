@@ -1,4 +1,4 @@
-const { socketIO } = require("socket.io")
+const { Server } = require("socket.io")
 const { hrtime } =  require("process")
 const { Sequelize, DataTypes } = require("sequelize")
 const express = require("express")
@@ -13,7 +13,7 @@ const server = express()
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: "postgres"
 })
-const io = socketIO(server)
+const io = new Server(server)
 
 const Entry = sequelize.define('User', {
     host: {
