@@ -83,9 +83,10 @@ names = fs.readFileSync("./identifiers/names/names.txt", {
 fruits = fs.readFileSync("./identifiers/surnames/fruit_names.txt", {
     encoding: 'utf-8'
 }).split(/\r?\n/)
+
 function get_nickname() {
     let nameIndex = Math.floor(Math.random() * names.length)
-    let fruitIndex = Math.floor(Math.random() * names.length)
+    let fruitIndex = Math.floor(Math.random() * fruits.length)
 
     return names[nameIndex] + " " + fruits[fruitIndex]
 }
