@@ -77,8 +77,12 @@ async function get_entry_latency(host) {
 }
 
 
-names = fs.readFileSync("./identifiers/names/names.txt").split(/\r?\n/)
-fruits = fs.readFileSync("./identifiers/surnames/fruit_names.txt").split(/\r?\n/)
+names = fs.readFileSync("./identifiers/names/names.txt", {
+    encoding: 'utf-8'
+}).split(/\r?\n/)
+fruits = fs.readFileSync("./identifiers/surnames/fruit_names.txt", {
+    encoding: 'utf-8'
+}).split(/\r?\n/)
 function get_nickname() {
     let nameIndex = Math.floor(Math.random() * names.length)
     let fruitIndex = Math.floor(Math.random() * names.length)
