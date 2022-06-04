@@ -52,9 +52,9 @@ let cached_entries = {
 
 }
 async function get_entry(host) {
-    if(host in cached_entries) {
-        return cached_entries[host]
-    }
+    // if(host in cached_entries) {
+    //     return cached_entries[host]
+    // }
     
     let entry = await Entry.findOne({
         where: {
@@ -62,10 +62,10 @@ async function get_entry(host) {
         }
     })
 
-    if (Object.keys(cached_entries).length > 1000) {
-        delete cached_entries[Object.keys(cached_entries)[0]]
-    }
-    cached_entries[host] = entry
+    // if (Object.keys(cached_entries).length > 1000) {
+    //     delete cached_entries[Object.keys(cached_entries)[0]]
+    // }
+    // cached_entries[host] = entry
 
     return entry
 }
