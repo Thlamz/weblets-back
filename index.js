@@ -130,9 +130,13 @@ async function register_measure(socket) {
     socket.conn.on("packet", (packet) => {
         if (typeof packet.data === 'string' && packet.data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
-            socket.emit("latency", lastMeasure)
             console.log(socket.handshake)
-            set_host_latency(socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress, lastMeasure)
+            let entry = set_host_latency(socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress, lastMeasure)
+            socket.emit("status", {
+                nickname: entry.nickname,
+                latency
+            })
+
         }
     })
 
