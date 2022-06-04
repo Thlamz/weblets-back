@@ -1,5 +1,5 @@
 const { Server } = require("socket.io")
-const { hrtime } =  require("process")
+const { hrtime } = require("process")
 const { Sequelize, DataTypes } = require("sequelize")
 const express = require("express")
 
@@ -7,28 +7,39 @@ const PORT = process.env.PORT || 3000;
 const INDEX = '/index.html';
 
 const server = express()
-  .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
-  .listen(PORT, () => console.log(`Listening on ${PORT}`));
+    .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
+    .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialect: "postgres",
-    ssl: {      
-        require: true,
-        rejectUnauthorized: false 
+    dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: false
+        }
     }
-})
+}
+);
+sequelize
+    .authenticate()
+    .then(() => {
+        console.log('Connection has been established successfully.');
+    })
+    .catch(err => {
+        console.error('Unable to connect to the database:', err);
+    });
+
 const io = new Server(server)
 
 const Entry = sequelize.define('User', {
     host: {
-      type: DataTypes.STRING,
-      allowNull: false
+        type: DataTypes.STRING,
+        allowNull: false
     },
     latency: {
-      type: DataTypes.DOUBLE,
-      allowNull: false
+        type: DataTypes.DOUBLE,
+        allowNull: false
     }
-  }, {});
+}, {});
 Entry.sync()
 
 
@@ -47,13 +58,13 @@ async function set_host_latency(host, latency) {
             "host": host
         }
     })
-    if(entry === null) {
+    if (entry === null) {
         entry = await Entry.create({
             host: host,
             latency: latency
         })
     } else {
-        if(latency > entry.latency) {
+        if (latency > entry.latency) {
             entry.latency = latency
             await entry.save()
 
@@ -70,8 +81,8 @@ async function set_host_latency(host, latency) {
 async function register_measure(socket) {
     let lastMeasure;
     let lastPing;
-    socket.conn.on("packet", ({data}) => {
-        if(typeof data === 'string' && data.includes("pongMeasure")) {
+    socket.conn.on("packet", ({ data }) => {
+        if (typeof data === 'string' && data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
             set_host_latency(socket.id, lastMeasure)
