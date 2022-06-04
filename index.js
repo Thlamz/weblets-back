@@ -89,15 +89,16 @@ async function set_host_latency(host, latency) {
 async function register_measure(socket) {
     let lastMeasure;
     let lastPing;
-    socket.conn.on("packet", ({ data }) => {
-        if (typeof data === 'string' && data.includes("pongMeasure")) {
+    socket.conn.on("packet", (packet) => {
+        console.log(packet)
+        if (typeof packet.data === 'string' && packet.data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
             
         }
     })
 
-    socket.conn.on("send", (host) => {
+    socket.on("send", (host) => {
         console.log("Saved host: ", host)
         set_host_latency(host, lastMeasure)
     })
