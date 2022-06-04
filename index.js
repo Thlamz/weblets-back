@@ -45,8 +45,10 @@ function set_host_latency(host, latency) {
             latency: latency
         })
     } else {
-        entry.latency = latency
-        await entry.save()
+        if(latency > entry.latency) {
+            entry.latency = latency
+            await entry.save()
+        }
     }
     return entry
 }
@@ -58,7 +60,7 @@ function register_measure(socket) {
         if(typeof data === 'string' && data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
-            registered_latencies[socket.id] = lastMeasure
+            set_host_latency(socket.id, lastMeasure)
         }
     })
 
