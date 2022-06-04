@@ -90,7 +90,3 @@ io.on('connection', (socket) => {
     console.log('a user connected');
     register_measure(socket)
 });
-
-server.listen(3000, () => {
-    console.log('listening on *:3000');
-});
