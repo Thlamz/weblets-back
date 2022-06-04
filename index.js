@@ -102,7 +102,8 @@ async function register_measure(socket) {
         if (typeof packet.data === 'string' && packet.data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
-            set_host_latency(socket.handshake.address.address, lastMeasure)
+            console.log(socket.handshake)
+            set_host_latency(socket.handshake.address, lastMeasure)
         }
     })
 
