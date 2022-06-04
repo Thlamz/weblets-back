@@ -127,16 +127,26 @@ async function get_leaderboard() {
 async function register_measure(socket) {
     let lastMeasure;
     let lastPing;
+    let host = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress
+
+    let entry = await Entry.findOne({
+        host
+    })
+    if(!entry) {
+        entry = await Entry.create({
+            host,
+            latency: 0,
+            nickname: get_nickname()
+        })
+    }
+    socket.emit("nickname", entry.nickname)
+
     socket.conn.on("packet", (packet) => {
         if (typeof packet.data === 'string' && packet.data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
+            socket.emit("latency", lastMeasure)
             console.log(socket.handshake)
-            let entry = set_host_latency(socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress, lastMeasure)
-            socket.emit("status", {
-                nickname: entry.nickname,
-                latency: lastMeasure
-            })
-
+            set_host_latency(host, lastMeasure)
         }
     })
 
