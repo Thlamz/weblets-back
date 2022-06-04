@@ -1,13 +1,13 @@
 const http = require('http')
-const server = http.createServer();
+const server = http.createServer()
 const { Server } = require("socket.io")
 const { hrtime } =  require("process")
-const { Sequelize, DataTypes } = require("sequelize");
-const sequelize = new Sequelize("");
+const { Sequelize, DataTypes } = require("sequelize")
+
+const sequelize = new Sequelize(process.env.PSQL_URL)
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:8000",
-        methods: ["GET", "POST"]
+        origin: "*",
     },
 });
 
