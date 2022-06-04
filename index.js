@@ -91,7 +91,6 @@ async function register_measure(socket) {
     let lastMeasure;
     let lastPing;
     socket.conn.on("packet", (packet) => {
-        console.log(packet)
         if (typeof packet.data === 'string' && packet.data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
