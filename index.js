@@ -94,7 +94,7 @@ function get_nickname() {
 async function set_host_latency(host, latency) {
     let currentLatency = await get_entry_latency(host)
     if (currentLatency === null) {
-        entry = await Entry.create({
+        await Entry.create({
             host: host,
             latency: latency,
             nickname: get_nickname()
@@ -113,7 +113,6 @@ async function set_host_latency(host, latency) {
             io.local.emit('leaderboard', await get_leaderboard())
         }
     }
-    return entry
 }
 async function get_leaderboard() {
     let entries = await Entry.findAll()
