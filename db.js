@@ -1,3 +1,6 @@
+const { Sequelize, DataTypes } = require("sequelize")
+const fs = require("fs")
+
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialectOptions: {
         ssl: {
@@ -8,7 +11,6 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
 }
 );
 
-const { Sequelize, DataTypes } = require("sequelize")
 sequelize
 .authenticate()
 .then(() => {
@@ -39,11 +41,10 @@ Entry.sync()
 
 
 // Database functions
-
-names = fs.readFileSync("./identifiers/names/names.txt", {
+const names = fs.readFileSync("./identifiers/names/names.txt", {
     encoding: 'utf-8'
 }).split(/\r?\n/)
-fruits = fs.readFileSync("./identifiers/surnames/fruit_names.txt", {
+const fruits = fs.readFileSync("./identifiers/surnames/fruit_names.txt", {
     encoding: 'utf-8'
 }).split(/\r?\n/)
 
@@ -71,7 +72,7 @@ async function get_entry(host) {
 }
 
 
-max_cached_entries = 10000
+const max_cached_entries = 10000
 let cached_entries = {}
 async function get_entry_latency(host) {
     if(host in cached_entries) {
@@ -87,7 +88,7 @@ async function get_entry_latency(host) {
         return null
     }
 
-    if (Object.keys(cached_entries).length > 10000) {
+    if (Object.keys(cached_entries).length > max_cached_entries) {
         delete cached_entries[Object.keys(cached_entries)[0]]
     }
     cached_entries[host] = entry.latency

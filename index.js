@@ -41,7 +41,7 @@ async function register_measure(socket) {
         }
     })
 
-    socket.conn.on("packet", (packet) => {
+    socket.conn.on("packet", async (packet) => {
         if (typeof packet.data === 'string' && packet.data.includes("pongMeasure")) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
