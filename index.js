@@ -1,8 +1,7 @@
 const { Server } = require("socket.io")
-const { hrtime } = require("process")
-const { Sequelize, DataTypes } = require("sequelize")
-const fs = require("fs")
+const { hrtime } = require("process") 
 const express = require("express")
+const { get_entry, create_entry, set_entry_latency, get_leaderboard } = require("db")
 
 const PORT = process.env.PORT || 3000;
 const INDEX = '/index.html';
@@ -11,139 +10,22 @@ const server = express()
     .use((req, res) => res.sendFile(INDEX, { root: __dirname }))
     .listen(PORT, () => console.log(`Listening on ${PORT}`));
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
-        }
-    }
-}
-);
-
-sequelize
-    .authenticate()
-    .then(() => {
-        console.log('Connection has been established successfully.');
-    })
-    .catch(err => {
-        console.error('Unable to connect to the database:', err);
-    });
-
 const io = new Server(server, {
     cors: {
         origin: '*'
     }
 })
 
-const Entry = sequelize.define('Entry', {
-    host: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    nickname: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    latency: {
-        type: DataTypes.DOUBLE,
-        allowNull: false
-    }
-}, {});
-Entry.sync()
-
-max_cached_entries = 10000
-let cached_entries = {}
-async function get_entry_latency(host) {
-    if(host in cached_entries) {
-         return cached_entries[host]
-    }
-    
-    let entry = await Entry.findOne({
-        where: {
-            "host": host
-        }
-    })
-    if(!entry) {
-        return null
-    }
-
-    if (Object.keys(cached_entries).length > 10000) {
-        delete cached_entries[Object.keys(cached_entries)[0]]
-    }
-    cached_entries[host] = entry.latency
-
-    return entry.latency
-}
-
-
-names = fs.readFileSync("./identifiers/names/names.txt", {
-    encoding: 'utf-8'
-}).split(/\r?\n/)
-fruits = fs.readFileSync("./identifiers/surnames/fruit_names.txt", {
-    encoding: 'utf-8'
-}).split(/\r?\n/)
-
-function get_nickname() {
-    let nameIndex = Math.floor(Math.random() * names.length)
-    let fruitIndex = Math.floor(Math.random() * fruits.length)
-
-    return names[nameIndex] + " " + fruits[fruitIndex]
-}
-
-async function set_host_latency(host, latency) {
-    let currentLatency = await get_entry_latency(host)
-    if (currentLatency === null) {
-        await Entry.create({
-            host: host,
-            latency: latency,
-            nickname: get_nickname()
-        })
-        io.local.emit('leaderboard', await get_leaderboard())
-    } else {
-        if (latency > currentLatency) {
-            let entry = await Entry.findOne({
-                where: {
-                    "host": host
-                }
-            })
-            entry.latency = latency
-            cached_entries[host] = latency
-            await entry.save()
-            io.local.emit('leaderboard', await get_leaderboard())
-        }
-    }
-}
-async function get_leaderboard() {
-    let entries = await Entry.findAll({
-        order: [
-            ['latency', 'DESC']
-        ]
-    })
-    return entries.map(e => ({
-        nickname: e.nickname,
-        latency: e.latency
-    }))
-}
-
-
 async function register_measure(socket) {
     let lastMeasure;
     let lastPing;
     let host = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress
 
-    let entry = await Entry.findOne({
-        where: {
-            "host": host
-        }
-    })
+    let entry = await get_entry(host)
     if(!entry) {
-        entry = await Entry.create({
-            host,
-            latency: 0,
-            nickname: get_nickname()
-        })
+        entry = await create_entry(host)
     }
+
     socket.emit("nickname", entry.nickname)
 
     let interval
@@ -164,7 +46,9 @@ async function register_measure(socket) {
             lastMeasure = Number(hrtime.bigint() - lastPing) / 1e6
             socket.emit("latency", lastMeasure)
             interval = setTimeout(pingFunction, 500)
-            set_host_latency(host, lastMeasure)
+            if(await set_entry_latency(host, lastMeasure)) {
+                io.local.emit('leaderboard', await get_leaderboard())
+            }
         }
     })
 }
