@@ -1,7 +1,7 @@
 const { Server } = require("socket.io")
 const { hrtime } = require("process") 
 const express = require("express")
-const { get_entry, create_entry, set_entry_latency, get_leaderboard } = require("db")
+const { get_entry, create_entry, set_entry_latency, get_leaderboard } = require("./db")
 
 const PORT = process.env.PORT || 3000;
 const INDEX = '/index.html';
