@@ -1,5 +1,6 @@
 const { get_entry, create_entry, set_entry_latency, get_leaderboard } = require("./entry")
 const { hrtime } = require("process") 
+const { Router } = require("express")
 
 async function register_measure(io, socket) {
     let lastMeasure;
@@ -41,13 +42,15 @@ async function register_measure(io, socket) {
 
 
 
-async function setup_ping(io) {
-    io.on('connection', (socket) => {
-        register_measure(io, socket)
-        get_leaderboard().then((leaderboard) => {
-            socket.emit('leaderboard', leaderboard)
-        })
-    });  
+async function register_ping_handler(io, socket) {
+    register_measure(io, socket)
+    get_leaderboard().then((leaderboard) => {
+        socket.emit('leaderboard', leaderboard)
+    })
 }
 
-module.exports = setup_ping
+module.exports = {
+    socket_handlers: [register_ping_handler],
+    router: Router(),
+    route: '/ping'
+}

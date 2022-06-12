@@ -22,10 +22,10 @@ Entry.sync()
 
 
 // Database functions
-const names = fs.readFileSync("./identifiers/names/names.txt", {
+const names = fs.readFileSync("./ping/identifiers/names/names.txt", {
     encoding: 'utf-8'
 }).split(/\r?\n/)
-const fruits = fs.readFileSync("./identifiers/surnames/fruit_names.txt", {
+const fruits = fs.readFileSync("./ping/identifiers/surnames/fruit_names.txt", {
     encoding: 'utf-8'
 }).split(/\r?\n/)
 
