@@ -1,11 +1,14 @@
 const { Server } = require("socket.io")
 const express = require("express");
+const cors = require("cors");
 const { socket_handlers: ping_socket_handlers, router: ping_router, route: ping_route } = require("./ping");
 const { socket_handlers: get_away_socket_handlers, router: get_away_router, route: get_away_route } = require("./getAway");
 
 const PORT = process.env.PORT || 3000;
 
 const server = express()
+server.use(cors({origin: '*'}))
+
 const http = server.listen(PORT, () => console.log(`Listening on ${PORT}`));
 const io = new Server(http, {
     cors: {
