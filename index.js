@@ -24,7 +24,7 @@ const endpoint_routers = [
 ]
 
 io.on('connection', (socket) => {
-    for(let handler in socket_handlers) {
+    for(let handler of socket_handlers) {
         handler(io, socket)
     }
 })
