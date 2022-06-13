@@ -20,5 +20,5 @@ router.get('/', async (req, res) => {
 module.exports = {
     socket_handlers: [],
     router: router,
-    route: '/get-away'
+    route: '/go-away'
 }
