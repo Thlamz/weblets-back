@@ -1,8 +1,7 @@
 const { Server } = require("socket.io")
 const express = require("express");
 const cors = require("cors");
-const { socket_handlers: ping_socket_handlers, router: ping_router, route: ping_route } = require("./ping/index.js");
-const { socket_handlers: get_away_socket_handlers, router: get_away_router, route: get_away_route } = require("./go-away/index.js");
+const { socket_handlers, endpoint_routers } = require("./weblets.js")
 
 const PORT = process.env.PORT || 3000;
 
@@ -15,16 +14,6 @@ const io = new Server(http, {
         origin: '*'
     }
 })
-
-const socket_handlers = [
-    ...ping_socket_handlers,
-    ...get_away_socket_handlers
-]
-
-const endpoint_routers = [
-    [ping_route, ping_router],
-    [get_away_route, get_away_router]
-]
 
 io.on('connection', (socket) => {
     for(let handler of socket_handlers) {
