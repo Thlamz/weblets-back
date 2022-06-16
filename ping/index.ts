@@ -1,12 +1,12 @@
-const { get_entry, create_entry, set_entry_latency, get_leaderboard } = require("./entry")
-const { hrtime } = require("process") 
-const { Router } = require("express")
+import { get_entry, create_entry, set_entry_latency, get_leaderboard } from "./entry"
+import { hrtime } from "process"
+import { Router } from "express"
+import { Server, Socket } from "socket.io"
 
-async function register_measure(io, socket) {
-    let lastMeasure;
-    let lastPing;
-    let host = socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress
-
+async function register_measure(io: Server, socket: Socket) {
+    let lastMeasure: number
+    let lastPing: bigint;
+    let host = <string> (socket.request.headers['x-forwarded-for'] || socket.request.connection.remoteAddress)
     let entry = await get_entry(host)
     if(!entry) {
         entry = await create_entry(host)
@@ -14,7 +14,7 @@ async function register_measure(io, socket) {
 
     socket.emit("nickname", entry.nickname)
 
-    let interval
+    let interval: NodeJS.Timeout
     let pingFunction = () => {
         socket.send("pingMeasure")
         lastPing = hrtime.bigint()
@@ -39,18 +39,15 @@ async function register_measure(io, socket) {
     })
 }
 
-
-
-
-async function register_ping_handler(io, socket) {
+async function register_ping_handler(io: Server, socket: Socket) {
     register_measure(io, socket)
     get_leaderboard().then((leaderboard) => {
         socket.emit('leaderboard', leaderboard)
     })
 }
 
-module.exports = {
-    socket_handlers: [register_ping_handler],
-    router: Router(),
-    route: '/ping'
-}
+export const socket_handlers = [register_ping_handler]
+
+export const route = '/ping'
+
+export const router = Router()

@@ -1,9 +1,15 @@
-const sequelize = require("../db.js")
-const { DataTypes } = require("sequelize")
-const fs = require("fs")
+import db from "../db"
+import { DataTypes, Model } from "sequelize"
+import fs from "fs"
+
+interface EntryModel extends Model {
+    host: string,
+    nickname: string,
+    latency: number
+}
 
 // Leaderboard entry model
-const Entry = sequelize.define('Entry', {
+const Entry = db.define<EntryModel>('Entry', {
     host: {
         type: DataTypes.STRING,
         allowNull: false
@@ -36,7 +42,7 @@ function get_nickname() {
     return names[nameIndex] + " " + fruits[fruitIndex]
 }
 
-async function create_entry(host, latency = 0) {
+export async function create_entry(host: string, latency: number = 0) {
     return await Entry.create({
         host,
         latency: latency,
@@ -44,7 +50,7 @@ async function create_entry(host, latency = 0) {
     })
 }
 
-async function get_entry(host) {
+export async function get_entry(host: string) {
     return await Entry.findOne({
         where: {
             host
@@ -54,8 +60,8 @@ async function get_entry(host) {
 
 
 const max_cached_entries = 10000
-let cached_entries = {}
-async function get_entry_latency(host) {
+let cached_entries: Record<string, number> = {}
+export async function get_entry_latency(host: string): Promise<number | null> {
     if(host in cached_entries) {
          return cached_entries[host]
     }
@@ -79,18 +85,19 @@ async function get_entry_latency(host) {
 
 
 
-async function set_entry_latency(host, latency) {
+export async function set_entry_latency(host: string, latency: number) {
     let currentLatency = await get_entry_latency(host)
     if (currentLatency === null) {
         await create_entry(host, latency)
         return true
     } else {
         if (latency > currentLatency) {
-            let entry = await Entry.findOne({
+            let entry = (await Entry.findOne({
                 where: {
                     "host": host
                 }
-            })
+            }))!
+
             entry.latency = latency
             cached_entries[host] = latency
             await entry.save()
@@ -101,7 +108,7 @@ async function set_entry_latency(host, latency) {
 }
 
 
-async function get_leaderboard() {
+export async function get_leaderboard() {
     let entries = await Entry.findAll({
         order: [
             ['latency', 'DESC']
@@ -111,14 +118,4 @@ async function get_leaderboard() {
         nickname: e.nickname,
         latency: e.latency
     }))
-}
-
-
-
-module.exports = {
-    create_entry,
-    get_entry,
-    get_entry_latency,
-    set_entry_latency,
-    get_leaderboard,
 }

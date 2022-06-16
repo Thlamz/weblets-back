@@ -1,7 +1,7 @@
-const { Server } = require("socket.io")
-const express = require("express");
-const cors = require("cors");
-const { socket_handlers, endpoint_routers } = require("./weblets.js")
+import { Server } from "socket.io"
+import express from "express"
+import cors from "cors"
+import { socket_handlers, endpoint_routers } from "./weblets"
 
 const PORT = process.env.PORT || 3000;
 

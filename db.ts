@@ -1,6 +1,10 @@
-const { Sequelize } = require("sequelize")
+import { Sequelize } from "sequelize"
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
+if(!process.env.DATABASE_URL) {
+    throw new Error("Database URL not specified")
+}
+
+const db = new Sequelize(process.env.DATABASE_URL, {
     dialectOptions: {
         ssl: {
             require: true,
@@ -10,7 +14,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
 }
 );
 
-sequelize
+db
 .authenticate()
 .then(() => {
     console.log('Connection has been established successfully.');
@@ -19,4 +23,4 @@ sequelize
     console.error('Unable to connect to the database:', err);
 });
 
-module.exports = sequelize
+export default db

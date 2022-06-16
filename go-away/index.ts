@@ -1,7 +1,8 @@
-const { Router } = require("express")
-const { get_last_access, register_access, last_day_acess_count } = require("./access")
+import { Router } from "express"
+import { get_last_access, register_access, last_day_acess_count } from "./access"
 
-let router = Router()
+export let router = Router()
+export const route = '/go_away'
 
 router.get('/', async (req, res) => {
     let last_access = await get_last_access()
@@ -16,9 +17,4 @@ router.get('/', async (req, res) => {
     })
 })
 
-
-module.exports = {
-    socket_handlers: [],
-    router: router,
-    route: '/go-away'
-}
+export const socket_handlers = []

@@ -1,8 +1,13 @@
-const sequelize = require("../db.js")
-const { DataTypes, Op } = require("sequelize")
+import sequelize from "../db"
+import { DataTypes, Op, Model } from "sequelize"
+
+interface AcessModel extends Model {
+    host: String,
+    time: Date
+}
 
 // Acess registry model
-const Access = sequelize.define('Access', {
+const Access = sequelize.define<AcessModel>('Access', {
     host: {
         type: DataTypes.STRING,
         allowNull: false
@@ -14,19 +19,20 @@ const Access = sequelize.define('Access', {
 }, {});
 Access.sync()
 
-let cached_last_access = null
-async function get_last_access() {
+let cached_last_access: AcessModel | null = null
+export async function get_last_access() {
     if(cached_last_access != null) {
         return cached_last_access
     }
-    return await Access.findOne({
+    cached_last_access = await Access.findOne({
         order: [
             ['time', 'DESC']
         ]
     })
+    return cached_last_access
 }
 
-async function last_day_acess_count() {
+export async function last_day_acess_count() {
     let today = new Date()
     today.setHours(today.getHours() - 24)
 
@@ -40,26 +46,22 @@ async function last_day_acess_count() {
 }
 
 const max_saved_accesses = 100
-async function register_access(host) {
-    if(Access.count() > max_saved_accesses) {
+export async function register_access(host: string) {
+    if((await Access.count()) > max_saved_accesses) {
         let oldest = await Access.findOne({
             order: [
                 ['createdAt', 'ASC']
             ]
         })
-        await oldest.destroy()
+        if(oldest) {
+            await oldest.destroy()
+        }
     }
     let time = new Date()
-    let access = await Access.create({
+    let access = (await Access.create({
         host,
         time
-    })
+    }))!
     cached_last_access = access
     return access
-}
-
-module.exports = {
-    get_last_access,
-    register_access,
-    last_day_acess_count
 }
